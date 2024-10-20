@@ -13,8 +13,7 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   /// Constructs an instance that will listen for webviews broadcasting to the
   /// given [id], using the given [WebViewPlatformCallbacksHandler].
   MethodChannelWebViewPlatform(int id, this._platformCallbacksHandler)
-      : assert(_platformCallbacksHandler != null),
-        _channel = MethodChannel('plugins.flutter.io/imp_webview_$id') {
+      : _channel = MethodChannel('plugins.flutter.io/imp_webview_$id') {
     _channel.setMethodCallHandler(_onMethodCall);
   }
 
@@ -26,40 +25,42 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
       MethodChannel('plugins.flutter.io/imp_cookie_manager');
 
   Future<bool?> _onMethodCall(MethodCall call) async {
+    final Map<String, dynamic> arguments =
+        call.arguments as Map<String, dynamic>;
     switch (call.method) {
       case 'javascriptChannelMessage':
-        final String channel = call.arguments['channel']!;
-        final String message = call.arguments['message']!;
+        final String channel = arguments['channel']! as String;
+        final String message = arguments['message']! as String;
         _platformCallbacksHandler.onJavaScriptChannelMessage(channel, message);
         return true;
       case 'navigationRequest':
         return await _platformCallbacksHandler.onNavigationRequest(
-          url: call.arguments['url']!,
-          isForMainFrame: call.arguments['isForMainFrame']!,
+          url: arguments['url']! as String,
+          isForMainFrame: arguments['isForMainFrame']! as bool,
         );
       case 'onPageFinished':
-        _platformCallbacksHandler.onPageFinished(call.arguments['url']!);
+        _platformCallbacksHandler.onPageFinished(arguments['url']! as String);
         return null;
       case 'onProgress':
-        _platformCallbacksHandler.onProgress(call.arguments['progress']);
+        _platformCallbacksHandler.onProgress(arguments['progress'] as int);
         return null;
       case 'onPageStarted':
-        _platformCallbacksHandler.onPageStarted(call.arguments['url']!);
+        _platformCallbacksHandler.onPageStarted(arguments['url']! as String);
         return null;
       case 'onWebResourceError':
         _platformCallbacksHandler.onWebResourceError(
           WebResourceError(
-            errorCode: call.arguments['errorCode']!,
-            description: call.arguments['description']!,
+            errorCode: arguments['errorCode']! as int,
+            description: arguments['description']! as String,
             // iOS doesn't support `failingUrl`.
-            failingUrl: call.arguments['failingUrl'],
-            domain: call.arguments['domain'],
-            errorType: call.arguments['errorType'] == null
+            failingUrl: arguments['failingUrl'] as String?,
+            domain: arguments['domain'] as String?,
+            errorType: arguments['errorType'] == null
                 ? null
                 : WebResourceErrorType.values.firstWhere(
                     (WebResourceErrorType type) {
                       return type.toString() ==
-                          '$WebResourceErrorType.${call.arguments['errorType']}';
+                          '$WebResourceErrorType.${arguments['errorType']}';
                     },
                   ),
           ),
@@ -77,7 +78,6 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
     String url,
     Map<String, String>? headers,
   ) async {
-    assert(url != null);
     return _channel.invokeMethod<void>('loadUrl', <String, dynamic>{
       'url': url,
       'headers': headers,
@@ -92,7 +92,6 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
     String? encoding,
     String? failUrl,
   ) async {
-    assert(data != null);
     return _channel.invokeMethod<void>('loadDataWithBaseURL', <String, dynamic>{
       'baseUrl': baseUrl,
       'data': data,
@@ -107,23 +106,24 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
 
   @override
   Future<bool> canGoBack() =>
-      _channel.invokeMethod<bool>("canGoBack").then((result) => result!);
+      _channel.invokeMethod<bool>('canGoBack').then((bool? result) => result!);
 
   @override
-  Future<bool> canGoForward() =>
-      _channel.invokeMethod<bool>("canGoForward").then((result) => result!);
+  Future<bool> canGoForward() => _channel
+      .invokeMethod<bool>('canGoForward')
+      .then((bool? result) => result!);
 
   @override
-  Future<void> goBack() => _channel.invokeMethod<void>("goBack");
+  Future<void> goBack() => _channel.invokeMethod<void>('goBack');
 
   @override
-  Future<void> goForward() => _channel.invokeMethod<void>("goForward");
+  Future<void> goForward() => _channel.invokeMethod<void>('goForward');
 
   @override
-  Future<void> reload() => _channel.invokeMethod<void>("reload");
+  Future<void> reload() => _channel.invokeMethod<void>('reload');
 
   @override
-  Future<void> clearCache() => _channel.invokeMethod<void>("clearCache");
+  Future<void> clearCache() => _channel.invokeMethod<void>('clearCache');
 
   @override
   Future<void> updateSettings(WebSettings settings) async {
@@ -137,7 +137,7 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   Future<String> evaluateJavascript(String javascriptString) {
     return _channel
         .invokeMethod<String>('evaluateJavascript', javascriptString)
-        .then((result) => result!);
+        .then((String? result) => result!);
   }
 
   @override
@@ -158,7 +158,7 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   }
 
   @override
-  Future<String?> getTitle() => _channel.invokeMethod<String>("getTitle");
+  Future<String?> getTitle() => _channel.invokeMethod<String>('getTitle');
 
   @override
   Future<void> scrollTo(int x, int y) {
@@ -178,44 +178,43 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
 
   @override
   Future<int> getScrollX() =>
-      _channel.invokeMethod<int>("getScrollX").then((result) => result!);
+      _channel.invokeMethod<int>('getScrollX').then((int? result) => result!);
 
   @override
   Future<int> getScrollY() =>
-      _channel.invokeMethod<int>("getScrollY").then((result) => result!);
+      _channel.invokeMethod<int>('getScrollY').then((int? result) => result!);
 
   /// Method channel implementation for [WebViewPlatform.clearCookies].
   static Future<bool> clearCookies() {
     return _cookieManagerChannel
         .invokeMethod<bool>('clearCookies')
-        .then<bool>((dynamic result) => result!);
+        .then<bool>((bool? result) => result!);
   }
 
   static Map<String, dynamic> _webSettingsToMap(WebSettings? settings) {
     final Map<String, dynamic> map = <String, dynamic>{};
-    void _addIfNonNull(String key, dynamic value) {
+    void addIfNonNull(String key, dynamic value) {
       if (value == null) {
         return;
       }
       map[key] = value;
     }
 
-    void _addSettingIfPresent<T>(String key, WebSetting<T> setting) {
+    void addSettingIfPresent<T>(String key, WebSetting<T> setting) {
       if (!setting.isPresent) {
         return;
       }
       map[key] = setting.value;
     }
 
-    _addIfNonNull('jsMode', settings!.javascriptMode?.index);
-    _addIfNonNull('hasNavigationDelegate', settings.hasNavigationDelegate);
-    _addIfNonNull('hasProgressTracking', settings.hasProgressTracking);
-    _addIfNonNull('debuggingEnabled', settings.debuggingEnabled);
-    _addIfNonNull(
-        'gestureNavigationEnabled', settings.gestureNavigationEnabled);
-    _addIfNonNull(
+    addIfNonNull('jsMode', settings!.javascriptMode?.index);
+    addIfNonNull('hasNavigationDelegate', settings.hasNavigationDelegate);
+    addIfNonNull('hasProgressTracking', settings.hasProgressTracking);
+    addIfNonNull('debuggingEnabled', settings.debuggingEnabled);
+    addIfNonNull('gestureNavigationEnabled', settings.gestureNavigationEnabled);
+    addIfNonNull(
         'allowsInlineMediaPlayback', settings.allowsInlineMediaPlayback);
-    _addSettingIfPresent('userAgent', settings.userAgent);
+    addSettingIfPresent('userAgent', settings.userAgent);
     return map;
   }
 

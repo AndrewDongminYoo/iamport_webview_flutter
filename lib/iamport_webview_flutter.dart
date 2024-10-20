@@ -18,7 +18,7 @@ import 'src/webview_method_channel.dart';
 
 /// Optional callback invoked when a web view is first created. [controller] is
 /// the [WebViewController] for the created web view.
-typedef void WebViewCreatedCallback(WebViewController controller);
+typedef WebViewCreatedCallback = void Function(WebViewController controller);
 
 /// Describes the state of JavaScript support in a given web view.
 enum JavascriptMode {
@@ -34,14 +34,14 @@ class JavascriptMessage {
   /// Constructs a JavaScript message object.
   ///
   /// The `message` parameter must not be null.
-  const JavascriptMessage(this.message) : assert(message != null);
+  const JavascriptMessage(this.message);
 
   /// The contents of the message that was sent by the JavaScript code.
   final String message;
 }
 
 /// Callback type for handling messages sent from Javascript running in a web view.
-typedef void JavascriptMessageHandler(JavascriptMessage message);
+typedef JavascriptMessageHandler = void Function(JavascriptMessage message);
 
 /// Information about a navigation action that is about to be executed.
 class NavigationRequest {
@@ -55,7 +55,7 @@ class NavigationRequest {
 
   @override
   String toString() {
-    return '$runtimeType(url: $url, isForMainFrame: $isForMainFrame)';
+    return 'NavigationRequest(url: $url, isForMainFrame: $isForMainFrame)';
   }
 }
 
@@ -87,7 +87,6 @@ class SurfaceAndroidWebView extends AndroidWebView {
     required WebViewPlatformCallbacksHandler webViewPlatformCallbacksHandler,
   }) {
     assert(Platform.isAndroid);
-    assert(webViewPlatformCallbacksHandler != null);
     return PlatformViewLink(
       viewType: 'plugins.flutter.io/imp_webview',
       surfaceFactory: (
@@ -136,20 +135,20 @@ class SurfaceAndroidWebView extends AndroidWebView {
 /// `navigation` should be handled.
 ///
 /// See also: [WebView.navigationDelegate].
-typedef FutureOr<NavigationDecision> NavigationDelegate(
+typedef NavigationDelegate = FutureOr<NavigationDecision> Function(
     NavigationRequest navigation);
 
 /// Signature for when a [WebView] has started loading a page.
-typedef void PageStartedCallback(String url);
+typedef PageStartedCallback = void Function(String url);
 
 /// Signature for when a [WebView] has finished loading a page.
-typedef void PageFinishedCallback(String url);
+typedef PageFinishedCallback = void Function(String url);
 
 /// Signature for when a [WebView] is loading a page.
-typedef void PageLoadingCallback(int progress);
+typedef PageLoadingCallback = void Function(int progress);
 
 /// Signature for when a [WebView] has failed to load a resource.
-typedef void WebResourceErrorCallback(WebResourceError error);
+typedef WebResourceErrorCallback = void Function(WebResourceError error);
 
 /// Specifies possible restrictions on automatic media playback.
 ///
@@ -170,7 +169,7 @@ enum AutoMediaPlaybackPolicy {
   always_allow,
 }
 
-final RegExp _validChannelNames = RegExp('^[a-zA-Z_][a-zA-Z0-9_]*\$');
+final RegExp _validChannelNames = RegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$');
 
 /// A named channel for receiving messaged from JavaScript code running inside a web view.
 class JavascriptChannel {
@@ -180,9 +179,7 @@ class JavascriptChannel {
   JavascriptChannel({
     required this.name,
     required this.onMessageReceived,
-  })   : assert(name != null),
-        assert(onMessageReceived != null),
-        assert(_validChannelNames.hasMatch(name));
+  }) : assert(_validChannelNames.hasMatch(name));
 
   /// The channel's name.
   ///
@@ -231,10 +228,7 @@ class WebView extends StatefulWidget {
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
     this.allowsInlineMediaPlayback = false,
-  })  : assert(javascriptMode != null),
-        assert(initialMediaPlaybackPolicy != null),
-        assert(allowsInlineMediaPlayback != null),
-        super(key: key);
+  }) : super(key: key);
 
   static WebViewPlatform? _platform;
 
@@ -261,7 +255,10 @@ class WebView extends StatefulWidget {
         case TargetPlatform.iOS:
           _platform = CupertinoWebView();
           break;
-        default:
+        case TargetPlatform.fuchsia:
+        case TargetPlatform.linux:
+        case TargetPlatform.macOS:
+        case TargetPlatform.windows:
           throw UnsupportedError(
               "Trying to use the default webview implementation for $defaultTargetPlatform but there isn't a default one");
       }
@@ -501,17 +498,15 @@ WebSettings _clearUnchangedWebSettings(
   assert(currentValue.hasNavigationDelegate != null);
   assert(currentValue.hasProgressTracking != null);
   assert(currentValue.debuggingEnabled != null);
-  assert(currentValue.userAgent != null);
   assert(newValue.javascriptMode != null);
   assert(newValue.hasNavigationDelegate != null);
   assert(newValue.debuggingEnabled != null);
-  assert(newValue.userAgent != null);
 
   JavascriptMode? javascriptMode;
   bool? hasNavigationDelegate;
   bool? hasProgressTracking;
   bool? debuggingEnabled;
-  WebSetting<String?> userAgent = WebSetting.absent();
+  WebSetting<String?> userAgent = const WebSetting<String?>.absent();
   if (currentValue.javascriptMode != newValue.javascriptMode) {
     javascriptMode = newValue.javascriptMode;
   }
@@ -594,6 +589,7 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
     }
   }
 
+  @override
   void onWebResourceError(WebResourceError error) {
     if (_widget.onWebResourceError != null) {
       _widget.onWebResourceError!(error);
@@ -605,7 +601,7 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
     if (channels == null) {
       return;
     }
-    for (JavascriptChannel channel in channels) {
+    for (final JavascriptChannel channel in channels) {
       _javascriptChannels[channel.name] = channel;
     }
   }
@@ -620,7 +616,7 @@ class WebViewController {
     this._widget,
     this._webViewPlatformController,
     this._platformCallbacksHandler,
-  ) : assert(_webViewPlatformController != null) {
+  ) {
     _settings = _webSettingsFromWidget(_widget);
   }
 
@@ -644,7 +640,6 @@ class WebViewController {
     String url, {
     Map<String, String>? headers,
   }) async {
-    assert(url != null);
     _validateUrlString(url);
     return _webViewPlatformController.loadUrl(url, headers);
   }
@@ -664,7 +659,6 @@ class WebViewController {
     String? encoding,
     String? failUrl,
   ) async {
-    assert(data != null);
     _validateUrlString(baseUrl!);
     return _webViewPlatformController.loadDataWithBaseURL(
         baseUrl, data, mimeType, encoding, failUrl);
@@ -790,6 +784,7 @@ class WebViewController {
     return _webViewPlatformController.evaluateJavascript(javascriptString);
   }
 
+  // ignore: public_member_api_docs
   Future<void> setAcceptThirdPartyCookies(bool accept) {
     return _webViewPlatformController.setAcceptThirdPartyCookies(accept);
   }
