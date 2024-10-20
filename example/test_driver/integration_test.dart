@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// @dart = 2.9
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -14,6 +12,6 @@ Future<void> main() async {
   final String data =
       await driver.requestData(null, timeout: const Duration(minutes: 1));
   await driver.close();
-  final Map<String, dynamic> result = jsonDecode(data);
+  final Map<String, dynamic> result = jsonDecode(data) as Map<String, dynamic>;
   exit(result['result'] == 'true' ? 0 : 1);
 }

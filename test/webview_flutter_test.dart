@@ -10,10 +10,10 @@ import 'package:flutter/src/foundation/basic_types.dart';
 import 'package:flutter/src/gestures/recognizer.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:iamport_webview_flutter/platform_interface.dart';
 import 'package:iamport_webview_flutter/iamport_webview_flutter.dart';
+import 'package:iamport_webview_flutter/platform_interface.dart';
 
-typedef void VoidCallback();
+typedef VoidCallback = void Function();
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -21,18 +21,18 @@ void main() {
   final _FakePlatformViewsController fakePlatformViewsController =
       _FakePlatformViewsController();
 
-  final _FakeCookieManager _fakeCookieManager = _FakeCookieManager();
+  final _FakeCookieManager fakeCookieManager = _FakeCookieManager();
 
   setUpAll(() {
     SystemChannels.platform_views.setMockMethodCallHandler(
         fakePlatformViewsController.fakePlatformViewsMethodHandler);
     SystemChannels.platform
-        .setMockMethodCallHandler(_fakeCookieManager.onMethodCall);
+        .setMockMethodCallHandler(fakeCookieManager.onMethodCall);
   });
 
   setUp(() {
     fakePlatformViewsController.reset();
-    _fakeCookieManager.reset();
+    fakeCookieManager.reset();
   });
 
   testWidgets('Create WebView', (WidgetTester tester) async {
@@ -66,7 +66,6 @@ void main() {
 
     await tester.pumpWidget(const WebView(
       initialUrl: 'https://youtube.com',
-      javascriptMode: JavascriptMode.disabled,
     ));
     expect(platformWebView.javascriptMode, JavascriptMode.disabled);
   });
@@ -147,7 +146,7 @@ void main() {
     expect(canGoBackNoPageLoaded, false);
   });
 
-  testWidgets("Clear Cache", (WidgetTester tester) async {
+  testWidgets('Clear Cache', (WidgetTester tester) async {
     WebViewController? controller;
     await tester.pumpWidget(
       WebView(
@@ -372,7 +371,7 @@ void main() {
       ),
     );
     expect(
-        await controller.evaluateJavascript("fake js string"), "fake js string",
+        await controller.evaluateJavascript('fake js string'), 'fake js string',
         reason: 'should get the argument');
   });
 
@@ -382,7 +381,6 @@ void main() {
     await tester.pumpWidget(
       WebView(
         initialUrl: 'https://flutter.io',
-        javascriptMode: JavascriptMode.disabled,
         onWebViewCreated: (WebViewController webViewController) {
           controller = webViewController;
         },
@@ -440,7 +438,7 @@ void main() {
   });
 
   test('Only valid JavaScript channel names are allowed', () {
-    final JavascriptMessageHandler noOp = (JavascriptMessage msg) {};
+    void noOp(JavascriptMessage msg) {}
     JavascriptChannel(name: 'Tts1', onMessageReceived: noOp);
     JavascriptChannel(name: '_Alarm', onMessageReceived: noOp);
     JavascriptChannel(name: 'foo_bar_', onMessageReceived: noOp);
@@ -600,7 +598,6 @@ void main() {
     testWidgets('onPageStarted is null', (WidgetTester tester) async {
       await tester.pumpWidget(const WebView(
         initialUrl: 'https://youtube.com',
-        onPageStarted: null,
       ));
 
       final FakePlatformWebView platformWebView =
@@ -657,7 +654,6 @@ void main() {
     testWidgets('onPageFinished is null', (WidgetTester tester) async {
       await tester.pumpWidget(const WebView(
         initialUrl: 'https://youtube.com',
-        onPageFinished: null,
       ));
 
       final FakePlatformWebView platformWebView =
@@ -714,7 +710,6 @@ void main() {
     testWidgets('onLoadingProgress is null', (WidgetTester tester) async {
       await tester.pumpWidget(const WebView(
         initialUrl: 'https://youtube.com',
-        onProgress: null,
       ));
 
       final FakePlatformWebView platformWebView =
@@ -837,7 +832,6 @@ void main() {
 
       await tester.pumpWidget(WebView(
         key: key,
-        debuggingEnabled: false,
       ));
 
       expect(platformWebView.debuggingEnabled, false);
@@ -871,7 +865,7 @@ void main() {
               javascriptMode: JavascriptMode.disabled,
               hasNavigationDelegate: false,
               debuggingEnabled: false,
-              userAgent: WebSetting<String?>.of(null),
+              userAgent: const WebSetting<String?>.of(null),
               gestureNavigationEnabled: true,
             ),
           )));
@@ -925,23 +919,23 @@ void main() {
 class FakePlatformWebView {
   FakePlatformWebView(int? id, Map<dynamic, dynamic> params) {
     if (params.containsKey('initialUrl')) {
-      final String? initialUrl = params['initialUrl'];
+      final String? initialUrl = params['initialUrl'] as String?;
       if (initialUrl != null) {
         history.add(initialUrl);
         currentPosition++;
       }
     }
     if (params.containsKey('javascriptChannelNames')) {
-      javascriptChannelNames =
-          List<String>.from(params['javascriptChannelNames']);
+      javascriptChannelNames = List<String>.from(
+          params['javascriptChannelNames'] as Iterable<dynamic>);
     }
-    javascriptMode = JavascriptMode.values[params['settings']['jsMode']];
-    hasNavigationDelegate =
-        params['settings']['hasNavigationDelegate'] ?? false;
-    debuggingEnabled = params['settings']['debuggingEnabled'];
-    userAgent = params['settings']['userAgent'];
-    channel = MethodChannel(
-        'plugins.flutter.io/webview_$id', const StandardMethodCodec());
+    final Map<String, dynamic> settings =
+        params['settings'] as Map<String, dynamic>;
+    javascriptMode = JavascriptMode.values[settings['jsMode'] as int];
+    hasNavigationDelegate = settings['hasNavigationDelegate'] as bool? ?? false;
+    debuggingEnabled = settings['debuggingEnabled'] as bool?;
+    userAgent = settings['userAgent'] as String?;
+    channel = MethodChannel('plugins.flutter.io/webview_$id');
     channel.setMockMethodCallHandler(onMethodCall);
   }
 
@@ -961,22 +955,24 @@ class FakePlatformWebView {
   String? userAgent;
 
   Future<dynamic> onMethodCall(MethodCall call) {
+    final Map<String, dynamic> arguments =
+        call.arguments as Map<String, dynamic>;
     switch (call.method) {
       case 'loadUrl':
-        final Map<dynamic, dynamic> request = call.arguments;
-        _loadUrl(request['url']);
+        final Map<dynamic, dynamic> request = arguments;
+        _loadUrl(request['url'] as String?);
         return Future<void>.sync(() {});
       case 'updateSettings':
-        if (call.arguments['jsMode'] != null) {
-          javascriptMode = JavascriptMode.values[call.arguments['jsMode']];
+        if (arguments['jsMode'] != null) {
+          javascriptMode = JavascriptMode.values[arguments['jsMode'] as int];
         }
-        if (call.arguments['hasNavigationDelegate'] != null) {
-          hasNavigationDelegate = call.arguments['hasNavigationDelegate'];
+        if (arguments['hasNavigationDelegate'] != null) {
+          hasNavigationDelegate = arguments['hasNavigationDelegate'] as bool;
         }
-        if (call.arguments['debuggingEnabled'] != null) {
-          debuggingEnabled = call.arguments['debuggingEnabled'];
+        if (arguments['debuggingEnabled'] != null) {
+          debuggingEnabled = arguments['debuggingEnabled'] as bool;
         }
-        userAgent = call.arguments['userAgent'];
+        userAgent = arguments['userAgent'] as String?;
         break;
       case 'canGoBack':
         return Future<bool>.sync(() => currentPosition > 0);
@@ -994,13 +990,15 @@ class FakePlatformWebView {
       case 'currentUrl':
         return Future<String?>.value(currentUrl);
       case 'evaluateJavascript':
-        return Future<dynamic>.value(call.arguments);
+        return Future<dynamic>.value(arguments);
       case 'addJavascriptChannels':
-        final List<String> channelNames = List<String>.from(call.arguments);
+        final List<String> channelNames =
+            List<String>.from(arguments as Iterable<dynamic>);
         javascriptChannelNames!.addAll(channelNames);
         break;
       case 'removeJavascriptChannels':
-        final List<String> channelNames = List<String>.from(call.arguments);
+        final List<String> channelNames =
+            List<String>.from(arguments as Iterable<dynamic>);
         javascriptChannelNames!
             .removeWhere((String channel) => channelNames.contains(channel));
         break;
@@ -1012,14 +1010,14 @@ class FakePlatformWebView {
   }
 
   void fakeJavascriptPostMessage(String jsChannel, String message) {
-    final StandardMethodCodec codec = const StandardMethodCodec();
+    const StandardMethodCodec codec = StandardMethodCodec();
     final Map<String, dynamic> arguments = <String, dynamic>{
       'channel': jsChannel,
       'message': message
     };
     final ByteData data = codec
         .encodeMethodCall(MethodCall('javascriptChannelMessage', arguments));
-    ServicesBinding.instance!.defaultBinaryMessenger
+    ServicesBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(channel.name, data, (ByteData? data) {});
   }
 
@@ -1027,20 +1025,20 @@ class FakePlatformWebView {
   // the user clicks a link in the currently loaded page.
   void fakeNavigate(String url) {
     if (!hasNavigationDelegate!) {
-      print('no navigation delegate');
+      debugPrint('no navigation delegate');
       _loadUrl(url);
       return;
     }
-    final StandardMethodCodec codec = const StandardMethodCodec();
+    const StandardMethodCodec codec = StandardMethodCodec();
     final Map<String, dynamic> arguments = <String, dynamic>{
       'url': url,
       'isForMainFrame': true
     };
     final ByteData data =
         codec.encodeMethodCall(MethodCall('navigationRequest', arguments));
-    ServicesBinding.instance!.defaultBinaryMessenger
+    ServicesBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(channel.name, data, (ByteData? data) {
-      final bool allow = codec.decodeEnvelope(data!);
+      final bool allow = codec.decodeEnvelope(data!) as bool;
       if (allow) {
         _loadUrl(url);
       }
@@ -1048,14 +1046,14 @@ class FakePlatformWebView {
   }
 
   void fakeOnPageStartedCallback() {
-    final StandardMethodCodec codec = const StandardMethodCodec();
+    const StandardMethodCodec codec = StandardMethodCodec();
 
     final ByteData data = codec.encodeMethodCall(MethodCall(
       'onPageStarted',
       <dynamic, dynamic>{'url': currentUrl},
     ));
 
-    ServicesBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+    ServicesBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
       channel.name,
       data,
       (ByteData? data) {},
@@ -1063,14 +1061,14 @@ class FakePlatformWebView {
   }
 
   void fakeOnPageFinishedCallback() {
-    final StandardMethodCodec codec = const StandardMethodCodec();
+    const StandardMethodCodec codec = StandardMethodCodec();
 
     final ByteData data = codec.encodeMethodCall(MethodCall(
       'onPageFinished',
       <dynamic, dynamic>{'url': currentUrl},
     ));
 
-    ServicesBinding.instance!.defaultBinaryMessenger.handlePlatformMessage(
+    ServicesBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
       channel.name,
       data,
       (ByteData? data) {},
@@ -1078,14 +1076,14 @@ class FakePlatformWebView {
   }
 
   void fakeOnProgressCallback(int progress) {
-    final StandardMethodCodec codec = const StandardMethodCodec();
+    const StandardMethodCodec codec = StandardMethodCodec();
 
     final ByteData data = codec.encodeMethodCall(MethodCall(
       'onProgress',
       <dynamic, dynamic>{'progress': progress},
     ));
 
-    ServicesBinding.instance!.defaultBinaryMessenger
+    ServicesBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(channel.name, data, (ByteData? data) {});
   }
 
@@ -1103,10 +1101,12 @@ class _FakePlatformViewsController {
   Future<dynamic> fakePlatformViewsMethodHandler(MethodCall call) {
     switch (call.method) {
       case 'create':
-        final Map<dynamic, dynamic> args = call.arguments;
-        final Map<dynamic, dynamic> params = _decodeParams(args['params'])!;
+        final Map<dynamic, dynamic> args =
+            call.arguments as Map<dynamic, dynamic>;
+        final Map<dynamic, dynamic> params =
+            _decodeParams(args['params'] as Uint8List)!;
         lastCreatedView = FakePlatformWebView(
-          args['id'],
+          args['id'] as int?,
           params,
         );
         return Future<int>.sync(() => 1);
@@ -1126,14 +1126,14 @@ Map<dynamic, dynamic>? _decodeParams(Uint8List paramsMessage) {
     paramsMessage.offsetInBytes,
     paramsMessage.lengthInBytes,
   );
-  return const StandardMessageCodec().decodeMessage(messageBytes);
+  return const StandardMessageCodec().decodeMessage(messageBytes)
+      as Map<dynamic, dynamic>?;
 }
 
 class _FakeCookieManager {
   _FakeCookieManager() {
-    final MethodChannel channel = const MethodChannel(
+    const MethodChannel channel = MethodChannel(
       'plugins.flutter.io/cookie_manager',
-      StandardMethodCodec(),
     );
     channel.setMockMethodCallHandler(onMethodCall);
   }
@@ -1190,6 +1190,7 @@ class MyWebViewPlatformController extends WebViewPlatformController {
       : super(platformHandler);
 
   CreationParams? creationParams;
+  // ignore: unreachable_from_main
   Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers;
 
   String? lastUrlLoaded;
