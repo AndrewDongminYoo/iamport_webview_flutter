@@ -60,70 +60,74 @@ class _WebViewExampleState extends State<WebViewExample> {
       ),
       // We're using a Builder here so we have a context that is below the Scaffold
       // to allow calling Scaffold.of(context) so we can show a snackbar.
-      body: Builder(builder: (BuildContext context) {
-        return WebView(
-          initialUrl: 'https://flutter.dev',
-          javascriptMode: JavascriptMode.unrestricted,
-          onWebViewCreated: (WebViewController webViewController) {
-            _controller.complete(webViewController);
-          },
-          onProgress: (int progress) {
-            log('WebView is loading (progress : $progress%)');
-          },
-          javascriptChannels: <JavascriptChannel>{
-            _toasterJavascriptChannel(context),
-          },
-          navigationDelegate: (NavigationRequest request) {
-            if (request.url.startsWith('https://www.youtube.com/')) {
-              log('blocking navigation to $request}');
-              return NavigationDecision.prevent;
-            }
-            log('allowing navigation to $request');
-            return NavigationDecision.navigate;
-          },
-          onPageStarted: (String url) {
-            log('Page started loading: $url');
-          },
-          onPageFinished: (String url) {
-            log('Page finished loading: $url');
-          },
-          gestureNavigationEnabled: true,
-        );
-      }),
+      body: Builder(
+        builder: (BuildContext context) {
+          return WebView(
+            initialUrl: 'https://flutter.dev',
+            javascriptMode: JavascriptMode.unrestricted,
+            onWebViewCreated: _controller.complete,
+            onProgress: (int progress) {
+              log('WebView is loading (progress : $progress%)');
+            },
+            javascriptChannels: <JavascriptChannel>{
+              _toasterJavascriptChannel(context),
+            },
+            navigationDelegate: (NavigationRequest request) {
+              if (request.url.startsWith('https://www.youtube.com/')) {
+                log('blocking navigation to $request}');
+                return NavigationDecision.prevent;
+              }
+              log('allowing navigation to $request');
+              return NavigationDecision.navigate;
+            },
+            onPageStarted: (String url) {
+              log('Page started loading: $url');
+            },
+            onPageFinished: (String url) {
+              log('Page finished loading: $url');
+            },
+            gestureNavigationEnabled: true,
+          );
+        },
+      ),
       floatingActionButton: favoriteButton(),
     );
   }
 
   JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
     return JavascriptChannel(
-        name: 'Toaster',
-        onMessageReceived: (JavascriptMessage message) {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
-        });
+      name: 'Toaster',
+      onMessageReceived: (JavascriptMessage message) {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message.message)),
+        );
+      },
+    );
   }
 
   Widget favoriteButton() {
     return FutureBuilder<WebViewController>(
-        future: _controller.future,
-        builder: (BuildContext context,
-            AsyncSnapshot<WebViewController> controller) {
-          if (controller.hasData) {
-            return FloatingActionButton(
-              onPressed: () async {
-                final String url = (await controller.data!.currentUrl())!;
-                // ignore: use_build_context_synchronously
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Favorite $url')),
-                );
-              },
-              child: const Icon(Icons.favorite),
-            );
-          }
-          return Container();
-        });
+      future: _controller.future,
+      builder: (
+        BuildContext context,
+        AsyncSnapshot<WebViewController> controller,
+      ) {
+        if (controller.hasData) {
+          return FloatingActionButton(
+            onPressed: () async {
+              final String url = (await controller.data!.currentUrl())!;
+              // ignore: use_build_context_synchronously
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Favorite $url')),
+              );
+            },
+            child: const Icon(Icons.favorite),
+          );
+        }
+        return Container();
+      },
+    );
   }
 }
 
@@ -150,29 +154,22 @@ class SampleMenu extends StatelessWidget {
       builder:
           (BuildContext context, AsyncSnapshot<WebViewController> controller) {
         return PopupMenuButton<MenuOptions>(
-          onSelected: (MenuOptions value) {
+          onSelected: (MenuOptions value) async {
             switch (value) {
               case MenuOptions.showUserAgent:
-                _onShowUserAgent(controller.data!, context);
-                break;
+                return _onShowUserAgent(controller.data!, context);
               case MenuOptions.listCookies:
-                _onListCookies(controller.data!, context);
-                break;
+                return _onListCookies(controller.data!, context);
               case MenuOptions.clearCookies:
-                _onClearCookies(context);
-                break;
+                return _onClearCookies(context);
               case MenuOptions.addToCache:
-                _onAddToCache(controller.data!, context);
-                break;
+                return _onAddToCache(controller.data!, context);
               case MenuOptions.listCache:
-                _onListCache(controller.data!, context);
-                break;
+                return _onListCache(controller.data!, context);
               case MenuOptions.clearCache:
-                _onClearCache(controller.data!, context);
-                break;
+                return _onClearCache(controller.data!, context);
               case MenuOptions.navigationDelegate:
-                _onNavigationDelegateExample(controller.data!, context);
-                break;
+                return _onNavigationDelegateExample(controller.data!, context);
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuItem<MenuOptions>>[
@@ -212,54 +209,72 @@ class SampleMenu extends StatelessWidget {
   }
 
   Future<void> _onShowUserAgent(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     // Send a message with the user agent string to the Toaster JavaScript channel we registered
     // with the WebView.
     await controller.evaluateJavascript(
-        'Toaster.postMessage("User Agent: " + navigator.userAgent);');
+      'Toaster.postMessage("User Agent: " + navigator.userAgent);',
+    );
   }
 
   Future<void> _onListCookies(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     final String cookies =
         await controller.evaluateJavascript('document.cookie');
     // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const Text('Cookies:'),
-          _getCookieList(cookies),
-        ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Text('Cookies:'),
+            _getCookieList(cookies),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Future<void> _onAddToCache(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     await controller.evaluateJavascript(
-        'caches.open("test_caches_entry"); localStorage["test_localStorage"] = "dummy_entry";');
+      'caches.open("test_caches_entry"); localStorage["test_localStorage"] = "dummy_entry";',
+    );
     // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Added a test entry to cache.'),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Added a test entry to cache.'),
+      ),
+    );
   }
 
   Future<void> _onListCache(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     await controller.evaluateJavascript('caches.keys()'
         '.then((cacheKeys) => JSON.stringify({"cacheKeys" : cacheKeys, "localStorage" : localStorage})) '
         '.then((caches) => Toaster.postMessage(caches))');
   }
 
   Future<void> _onClearCache(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     await controller.clearCache();
     // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Cache cleared.'),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cache cleared.'),
+      ),
+    );
   }
 
   Future<void> _onClearCookies(BuildContext context) async {
@@ -269,13 +284,17 @@ class SampleMenu extends StatelessWidget {
       message = 'There are no cookies.';
     }
     // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
   }
 
   Future<void> _onNavigationDelegateExample(
-      WebViewController controller, BuildContext context) async {
+    WebViewController controller,
+    BuildContext context,
+  ) async {
     final String contentBase64 =
         base64Encode(const Utf8Encoder().convert(kNavigationExamplePage));
     await controller.loadUrl('data:text/html;base64,$contentBase64');
@@ -340,7 +359,8 @@ class NavigationControls extends StatelessWidget {
                         // ignore: use_build_context_synchronously
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('No forward history item')),
+                            content: Text('No forward history item'),
+                          ),
                         );
                         return;
                       }
@@ -350,8 +370,8 @@ class NavigationControls extends StatelessWidget {
               icon: const Icon(Icons.replay),
               onPressed: !webViewReady
                   ? null
-                  : () {
-                      controller.reload();
+                  : () async {
+                      await controller.reload();
                     },
             ),
           ],

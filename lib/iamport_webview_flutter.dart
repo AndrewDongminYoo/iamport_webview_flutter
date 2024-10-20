@@ -123,6 +123,7 @@ class SurfaceAndroidWebView extends AndroidWebView {
               MethodChannelWebViewPlatform(id, webViewPlatformCallbacksHandler),
             );
           })
+          // ignore: discarded_futures
           ..create();
       },
     );
@@ -136,7 +137,8 @@ class SurfaceAndroidWebView extends AndroidWebView {
 ///
 /// See also: [WebView.navigationDelegate].
 typedef NavigationDelegate = FutureOr<NavigationDecision> Function(
-    NavigationRequest navigation);
+  NavigationRequest navigation,
+);
 
 /// Signature for when a [WebView] has started loading a page.
 typedef PageStartedCallback = void Function(String url);
@@ -260,7 +262,8 @@ class WebView extends StatefulWidget {
         case TargetPlatform.macOS:
         case TargetPlatform.windows:
           throw UnsupportedError(
-              "Trying to use the default webview implementation for $defaultTargetPlatform but there isn't a default one");
+            "Trying to use the default webview implementation for $defaultTargetPlatform but there isn't a default one",
+          );
       }
     }
     return _platform!;
@@ -444,18 +447,23 @@ class _WebViewState extends State<WebView> {
   void didUpdateWidget(WebView oldWidget) {
     super.didUpdateWidget(oldWidget);
     _assertJavascriptChannelNamesAreUnique();
+    // ignore: discarded_futures
     _controller.future.then((WebViewController controller) {
       _platformCallbacksHandler._widget = widget;
+      // ignore: discarded_futures
       controller._updateWidget(widget);
     });
   }
 
   void _onWebViewPlatformCreated(WebViewPlatformController? webViewPlatform) {
     final WebViewController controller = WebViewController._(
-        widget, webViewPlatform!, _platformCallbacksHandler);
+      widget,
+      webViewPlatform!,
+      _platformCallbacksHandler,
+    );
     _controller.complete(controller);
     if (widget.onWebViewCreated != null) {
-      widget.onWebViewCreated!(controller);
+      widget.onWebViewCreated!.call(controller);
     }
   }
 
@@ -464,8 +472,10 @@ class _WebViewState extends State<WebView> {
         widget.javascriptChannels!.isEmpty) {
       return;
     }
-    assert(_extractChannelNames(widget.javascriptChannels).length ==
-        widget.javascriptChannels!.length);
+    assert(
+      _extractChannelNames(widget.javascriptChannels).length ==
+          widget.javascriptChannels!.length,
+    );
   }
 }
 
@@ -493,7 +503,9 @@ WebSettings _webSettingsFromWidget(WebView widget) {
 
 // This method assumes that no fields in `currentValue` are null.
 WebSettings _clearUnchangedWebSettings(
-    WebSettings currentValue, WebSettings newValue) {
+  WebSettings currentValue,
+  WebSettings newValue,
+) {
   assert(currentValue.javascriptMode != null);
   assert(currentValue.hasNavigationDelegate != null);
   assert(currentValue.hasProgressTracking != null);
@@ -563,7 +575,7 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
     final NavigationRequest request =
         NavigationRequest._(url: url, isForMainFrame: isForMainFrame);
     final bool allowNavigation = _widget.navigationDelegate == null ||
-        await _widget.navigationDelegate!(request) ==
+        await _widget.navigationDelegate!.call(request) ==
             NavigationDecision.navigate;
     return allowNavigation;
   }
@@ -571,28 +583,28 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
   @override
   void onPageStarted(String url) {
     if (_widget.onPageStarted != null) {
-      _widget.onPageStarted!(url);
+      _widget.onPageStarted!.call(url);
     }
   }
 
   @override
   void onPageFinished(String url) {
     if (_widget.onPageFinished != null) {
-      _widget.onPageFinished!(url);
+      _widget.onPageFinished!.call(url);
     }
   }
 
   @override
   void onProgress(int progress) {
     if (_widget.onProgress != null) {
-      _widget.onProgress!(progress);
+      _widget.onProgress!.call(progress);
     }
   }
 
   @override
   void onWebResourceError(WebResourceError error) {
     if (_widget.onWebResourceError != null) {
-      _widget.onWebResourceError!(error);
+      _widget.onWebResourceError!.call(error);
     }
   }
 
@@ -661,7 +673,12 @@ class WebViewController {
   ) async {
     _validateUrlString(baseUrl!);
     return _webViewPlatformController.loadDataWithBaseURL(
-        baseUrl, data, mimeType, encoding, failUrl);
+      baseUrl,
+      data,
+      mimeType,
+      encoding,
+      failUrl,
+    );
   }
 
   /// Accessor to the current URL that the WebView is displaying.
@@ -739,7 +756,8 @@ class WebViewController {
   }
 
   Future<void> _updateJavascriptChannels(
-      Set<JavascriptChannel>? newChannels) async {
+    Set<JavascriptChannel>? newChannels,
+  ) async {
     final Set<String> currentChannels =
         _platformCallbacksHandler._javascriptChannels.keys.toSet();
     final Set<String> newChannelNames = _extractChannelNames(newChannels);
@@ -775,12 +793,14 @@ class WebViewController {
   /// embedded in the main frame HTML has been loaded.
   Future<String> evaluateJavascript(String javascriptString) {
     if (_settings.javascriptMode == JavascriptMode.disabled) {
-      return Future<String>.error(FlutterError(
-          'JavaScript mode must be enabled/unrestricted when calling evaluateJavascript.'));
+      return Future<String>.error(
+        FlutterError(
+          'JavaScript mode must be enabled/unrestricted when calling evaluateJavascript.',
+        ),
+      );
     }
     // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
     // https://github.com/flutter/flutter/issues/26431
-    // ignore: strong_mode_implicit_dynamic_method
     return _webViewPlatformController.evaluateJavascript(javascriptString);
   }
 

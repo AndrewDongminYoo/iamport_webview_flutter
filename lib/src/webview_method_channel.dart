@@ -143,13 +143,17 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   @override
   Future<void> addJavascriptChannels(Set<String> javascriptChannelNames) {
     return _channel.invokeMethod<void>(
-        'addJavascriptChannels', javascriptChannelNames.toList());
+      'addJavascriptChannels',
+      javascriptChannelNames.toList(),
+    );
   }
 
   @override
   Future<void> removeJavascriptChannels(Set<String> javascriptChannelNames) {
     return _channel.invokeMethod<void>(
-        'removeJavascriptChannels', javascriptChannelNames.toList());
+      'removeJavascriptChannels',
+      javascriptChannelNames.toList(),
+    );
   }
 
   @override
@@ -213,7 +217,9 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
     addIfNonNull('debuggingEnabled', settings.debuggingEnabled);
     addIfNonNull('gestureNavigationEnabled', settings.gestureNavigationEnabled);
     addIfNonNull(
-        'allowsInlineMediaPlayback', settings.allowsInlineMediaPlayback);
+      'allowsInlineMediaPlayback',
+      settings.allowsInlineMediaPlayback,
+    );
     addSettingIfPresent('userAgent', settings.userAgent);
     return map;
   }
@@ -221,7 +227,7 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   /// Converts a [CreationParams] object to a map as expected by `platform_views` channel.
   ///
   /// This is used for the `creationParams` argument of the platform views created by
-  /// [AndroidWebViewBuilder] and [CupertinoWebViewBuilder].
+  /// `AndroidWebViewBuilder` and `CupertinoWebViewBuilder`.
   static Map<String, dynamic> creationParamsToMap(
     CreationParams creationParams, {
     bool usesHybridComposition = false,
