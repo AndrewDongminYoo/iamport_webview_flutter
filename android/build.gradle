@@ -1,0 +1,42 @@
+version '1.0-SNAPSHOT'
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.4.2'
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdk 34
+
+    namespace = 'kr.iamport.iamport_webview_flutter'
+
+    defaultConfig {
+        minSdkVersion 16
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    dependencies {
+        implementation 'androidx.annotation:annotation:1.8.0'
+        implementation 'androidx.webkit:webkit:1.11.0'
+    }
+
+    buildToolsVersion = '34.0.0'
+}
