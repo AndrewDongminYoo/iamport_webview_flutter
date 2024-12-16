@@ -26,7 +26,6 @@ class AndroidWebView implements WebViewPlatform {
     WebViewPlatformCreatedCallback? onWebViewPlatformCreated,
     Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers,
   }) {
-    assert(webViewPlatformCallbacksHandler != null);
     return GestureDetector(
       // We prevent text selection by intercepting the long press event.
       // This is a temporary stop gap due to issues with text selection on Android:

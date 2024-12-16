@@ -34,7 +34,7 @@ class JavascriptMessage {
   /// Constructs a JavaScript message object.
   ///
   /// The `message` parameter must not be null.
-  const JavascriptMessage(this.message) : assert(message != null);
+  const JavascriptMessage(this.message);
 
   /// The contents of the message that was sent by the JavaScript code.
   final String message;
@@ -87,7 +87,6 @@ class SurfaceAndroidWebView extends AndroidWebView {
     required WebViewPlatformCallbacksHandler webViewPlatformCallbacksHandler,
   }) {
     assert(Platform.isAndroid);
-    assert(webViewPlatformCallbacksHandler != null);
     return PlatformViewLink(
       viewType: 'plugins.flutter.io/imp_webview',
       surfaceFactory: (
@@ -180,9 +179,7 @@ class JavascriptChannel {
   JavascriptChannel({
     required this.name,
     required this.onMessageReceived,
-  })   : assert(name != null),
-        assert(onMessageReceived != null),
-        assert(_validChannelNames.hasMatch(name));
+  })   : assert(_validChannelNames.hasMatch(name));
 
   /// The channel's name.
   ///
@@ -231,10 +228,7 @@ class WebView extends StatefulWidget {
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
     this.allowsInlineMediaPlayback = false,
-  })  : assert(javascriptMode != null),
-        assert(initialMediaPlaybackPolicy != null),
-        assert(allowsInlineMediaPlayback != null),
-        super(key: key);
+  })  : super(key: key);
 
   static WebViewPlatform? _platform;
 
@@ -501,11 +495,9 @@ WebSettings _clearUnchangedWebSettings(
   assert(currentValue.hasNavigationDelegate != null);
   assert(currentValue.hasProgressTracking != null);
   assert(currentValue.debuggingEnabled != null);
-  assert(currentValue.userAgent != null);
   assert(newValue.javascriptMode != null);
   assert(newValue.hasNavigationDelegate != null);
   assert(newValue.debuggingEnabled != null);
-  assert(newValue.userAgent != null);
 
   JavascriptMode? javascriptMode;
   bool? hasNavigationDelegate;
@@ -620,7 +612,7 @@ class WebViewController {
     this._widget,
     this._webViewPlatformController,
     this._platformCallbacksHandler,
-  ) : assert(_webViewPlatformController != null) {
+  ) {
     _settings = _webSettingsFromWidget(_widget);
   }
 
@@ -644,7 +636,6 @@ class WebViewController {
     String url, {
     Map<String, String>? headers,
   }) async {
-    assert(url != null);
     _validateUrlString(url);
     return _webViewPlatformController.loadUrl(url, headers);
   }
@@ -664,7 +655,6 @@ class WebViewController {
     String? encoding,
     String? failUrl,
   ) async {
-    assert(data != null);
     _validateUrlString(baseUrl!);
     return _webViewPlatformController.loadDataWithBaseURL(
         baseUrl, data, mimeType, encoding, failUrl);

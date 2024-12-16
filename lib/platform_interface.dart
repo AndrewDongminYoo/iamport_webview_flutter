@@ -113,8 +113,7 @@ class WebResourceError {
     this.domain,
     this.errorType,
     this.failingUrl,
-  })  : assert(errorCode != null),
-        assert(description != null);
+  });
 
   /// Raw code of the error from the respective platform.
   ///
@@ -400,9 +399,6 @@ class WebSetting<T> {
     final WebSetting<T> typedOther = other as WebSetting<T>;
     return typedOther.isPresent == isPresent && typedOther._value == _value;
   }
-
-  @override
-  int get hashCode => Object.hash(_value, isPresent);
 }
 
 /// Settings for configuring a WebViewPlatform.
@@ -424,7 +420,7 @@ class WebSettings {
     this.gestureNavigationEnabled,
     this.allowsInlineMediaPlayback,
     required this.userAgent,
-  }) : assert(userAgent != null);
+  });
 
   /// The JavaScript execution mode to be used by the webview.
   final JavascriptMode? javascriptMode;
@@ -482,7 +478,7 @@ class CreationParams {
     this.userAgent,
     this.autoMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
-  }) : assert(autoMediaPlaybackPolicy != null);
+  });
 
   /// The initialUrl to load in the webview.
   ///
