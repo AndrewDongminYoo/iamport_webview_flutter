@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// ignore_for_file: public_member_api_docs, avoid_print
+// ignore_for_file: public_member_api_docs
 
 import 'dart:async';
 import 'dart:convert';
@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:iamport_webview_flutter/iamport_webview_flutter.dart';
 
-void main() => runApp(const MaterialApp(home: WebViewExample()));
+void main() => runApp(MaterialApp(home: WebViewExample()));
 
 const String kNavigationExamplePage = '''
 <!DOCTYPE html><html>
@@ -28,10 +28,8 @@ The navigation delegate is set to block navigation to the youtube website.
 ''';
 
 class WebViewExample extends StatefulWidget {
-  const WebViewExample({Key? key}) : super(key: key);
-
   @override
-  State<WebViewExample> createState() => _WebViewExampleState();
+  _WebViewExampleState createState() => _WebViewExampleState();
 }
 
 class _WebViewExampleState extends State<WebViewExample> {
@@ -41,9 +39,7 @@ class _WebViewExampleState extends State<WebViewExample> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) {
-      WebView.platform = SurfaceAndroidWebView();
-    }
+    if (Platform.isAndroid) WebView.platform = SurfaceAndroidWebView();
   }
 
   @override
@@ -67,7 +63,7 @@ class _WebViewExampleState extends State<WebViewExample> {
             _controller.complete(webViewController);
           },
           onProgress: (int progress) {
-            print('WebView is loading (progress : $progress%)');
+            print("WebView is loading (progress : $progress%)");
           },
           javascriptChannels: <JavascriptChannel>{
             _toasterJavascriptChannel(context),
@@ -97,7 +93,7 @@ class _WebViewExampleState extends State<WebViewExample> {
     return JavascriptChannel(
         name: 'Toaster',
         onMessageReceived: (JavascriptMessage message) {
-          // ignore: use_build_context_synchronously
+          // ignore: deprecated_member_use
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message.message)),
           );
@@ -113,7 +109,7 @@ class _WebViewExampleState extends State<WebViewExample> {
             return FloatingActionButton(
               onPressed: () async {
                 final String url = (await controller.data!.currentUrl())!;
-                // ignore: use_build_context_synchronously
+                // ignore: deprecated_member_use
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Favorited $url')),
                 );
@@ -137,7 +133,7 @@ enum MenuOptions {
 }
 
 class SampleMenu extends StatelessWidget {
-  SampleMenu(this.controller, {Key? key}) : super(key: key);
+  SampleMenu(this.controller);
 
   final Future<WebViewController> controller;
   final CookieManager cookieManager = CookieManager();
@@ -177,8 +173,8 @@ class SampleMenu extends StatelessWidget {
           itemBuilder: (BuildContext context) => <PopupMenuItem<MenuOptions>>[
             PopupMenuItem<MenuOptions>(
               value: MenuOptions.showUserAgent,
-              enabled: controller.hasData,
               child: const Text('Show user agent'),
+              enabled: controller.hasData,
             ),
             const PopupMenuItem<MenuOptions>(
               value: MenuOptions.listCookies,
@@ -210,7 +206,7 @@ class SampleMenu extends StatelessWidget {
     );
   }
 
-  Future<void> _onShowUserAgent(
+  void _onShowUserAgent(
       WebViewController controller, BuildContext context) async {
     // Send a message with the user agent string to the Toaster JavaScript channel we registered
     // with the WebView.
@@ -218,11 +214,11 @@ class SampleMenu extends StatelessWidget {
         'Toaster.postMessage("User Agent: " + navigator.userAgent);');
   }
 
-  Future<void> _onListCookies(
+  void _onListCookies(
       WebViewController controller, BuildContext context) async {
     final String cookies =
         await controller.evaluateJavascript('document.cookie');
-    // ignore: use_build_context_synchronously
+    // ignore: deprecated_member_use
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -235,42 +231,42 @@ class SampleMenu extends StatelessWidget {
     ));
   }
 
-  Future<void> _onAddToCache(WebViewController controller, BuildContext context) async {
+  void _onAddToCache(WebViewController controller, BuildContext context) async {
     await controller.evaluateJavascript(
         'caches.open("test_caches_entry"); localStorage["test_localStorage"] = "dummy_entry";');
-    // ignore: use_build_context_synchronously
+    // ignore: deprecated_member_use
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('Added a test entry to cache.'),
     ));
   }
 
-  Future<void> _onListCache(WebViewController controller, BuildContext context) async {
-    await controller.evaluateJavascript('caches.keys() '
-        '.then((cacheKeys) => JSON.stringify({"cacheKeys" : cacheKeys, "localStorage" : localStorage})) '
+  void _onListCache(WebViewController controller, BuildContext context) async {
+    await controller.evaluateJavascript('caches.keys()'
+        '.then((cacheKeys) => JSON.stringify({"cacheKeys" : cacheKeys, "localStorage" : localStorage}))'
         '.then((caches) => Toaster.postMessage(caches))');
   }
 
-  Future<void> _onClearCache(WebViewController controller, BuildContext context) async {
+  void _onClearCache(WebViewController controller, BuildContext context) async {
     await controller.clearCache();
-    // ignore: use_build_context_synchronously
+    // ignore: deprecated_member_use
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('Cache cleared.'),
+      content: Text("Cache cleared."),
     ));
   }
 
-  Future<void> _onClearCookies(BuildContext context) async {
+  void _onClearCookies(BuildContext context) async {
     final bool hadCookies = await cookieManager.clearCookies();
     String message = 'There were cookies. Now, they are gone!';
     if (!hadCookies) {
       message = 'There are no cookies.';
     }
-    // ignore: use_build_context_synchronously
+    // ignore: deprecated_member_use
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
     ));
   }
 
-  Future<void> _onNavigationDelegateExample(
+  void _onNavigationDelegateExample(
       WebViewController controller, BuildContext context) async {
     final String contentBase64 =
         base64Encode(const Utf8Encoder().convert(kNavigationExamplePage));
@@ -278,7 +274,7 @@ class SampleMenu extends StatelessWidget {
   }
 
   Widget _getCookieList(String cookies) {
-    if (cookies == '""') {
+    if (cookies == null || cookies == '""') {
       return Container();
     }
     final List<String> cookieList = cookies.split(';');
@@ -293,8 +289,8 @@ class SampleMenu extends StatelessWidget {
 }
 
 class NavigationControls extends StatelessWidget {
-  const NavigationControls(this._webViewControllerFuture, {Key? key}) : super(key: key)
-      ;
+  const NavigationControls(this._webViewControllerFuture)
+      : assert(_webViewControllerFuture != null);
 
   final Future<WebViewController> _webViewControllerFuture;
 
@@ -317,9 +313,9 @@ class NavigationControls extends StatelessWidget {
                       if (await controller.canGoBack()) {
                         await controller.goBack();
                       } else {
-                        // ignore: use_build_context_synchronously
+                        // ignore: deprecated_member_use
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No back history item')),
+                          const SnackBar(content: Text("No back history item")),
                         );
                         return;
                       }
@@ -333,10 +329,10 @@ class NavigationControls extends StatelessWidget {
                       if (await controller.canGoForward()) {
                         await controller.goForward();
                       } else {
-                        // ignore: use_build_context_synchronously
+                        // ignore: deprecated_member_use
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('No forward history item')),
+                              content: Text("No forward history item")),
                         );
                         return;
                       }
