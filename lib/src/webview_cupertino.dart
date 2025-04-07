@@ -8,9 +8,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:iamport_webview_flutter/iamport_webview_flutter.dart' show WebView;
 
-import '../platform_interface.dart';
-import 'webview_method_channel.dart';
+import 'package:iamport_webview_flutter/platform_interface.dart';
+import 'package:iamport_webview_flutter/src/webview_method_channel.dart';
 
 /// Builds an iOS webview.
 ///
@@ -32,12 +33,10 @@ class CupertinoWebView implements WebViewPlatform {
         if (onWebViewPlatformCreated == null) {
           return;
         }
-        onWebViewPlatformCreated(
-            MethodChannelWebViewPlatform(id, webViewPlatformCallbacksHandler));
+        onWebViewPlatformCreated(MethodChannelWebViewPlatform(id, webViewPlatformCallbacksHandler));
       },
       gestureRecognizers: gestureRecognizers,
-      creationParams:
-          MethodChannelWebViewPlatform.creationParamsToMap(creationParams),
+      creationParams: MethodChannelWebViewPlatform.creationParamsToMap(creationParams),
       creationParamsCodec: const StandardMessageCodec(),
     );
   }
