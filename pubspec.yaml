@@ -1,10 +1,10 @@
 name: iamport_webview_flutter
 description: A Flutter plugin that provides a WebView widget on Android and iOS.
 homepage: https://github.com/anymate98/plugins/tree/master/packages/webview_flutter
-version: 3.0.7
+version: 3.1.0
 
 environment:
-  sdk: ">=2.14.0 <3.0.0"
+  sdk: ">=2.14.0 <4.0.0"
   flutter: ">=2.0.0"
 
 dependencies:

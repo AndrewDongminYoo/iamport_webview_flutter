@@ -1,3 +1,11 @@
+## 3.1.0
+
+- Removed v1 android embedding
+
+## 3.0.8
+
+- Fixed a compile error when using Flutter version 3.27.0 or above.
+
 ## 3.0.7
 
 - upgraded android gradle library version to 8.4.2
